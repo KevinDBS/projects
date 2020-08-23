@@ -1,0 +1,78 @@
+#This is a Python code using Logistic Regression to model the relationship between some biotech company's markert value and its various statistics, including
+#financial matrics, management level information and drug development outcome. 
+
+
+#import all packages
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+import statsmodels.api as sm
+from statsmodels.formula.api import logit
+
+df = pd.read_csv('C:/Users/kzhang/Desktop/IPO_Data.csv')
+
+#choose the companies that are categorized as "Biotech"
+biotech = df[df['company_type'] == 'Biotech']
+
+#slice the DataFrame to get the columns we need
+biotech = biotech[['years_before_IPO','days_listed', 'adj_ipo_window', 'offer_price2016', 
+                   'premoney_2016', 'private_money_2016', 'median_employees_thousands',
+                   'median_ebitda_2016','median_revenue_2016','median_netincome_2016',
+                   'median_grossprofit_2016','median_rnd_2016','median_stock_sale_2016', 
+                   'median_stock_bought_2016', 'num_of_approved', 'after_phase3',
+                   'Region', 'deletion_reason',  'billion_dollars_status',
+                   'GenderRatio', 'NationalityMix', 'NetworkSize']]
+
+#check how many NaN values each column has in the DataFrame and drop those NaN values
+biotech.isnull().sum()
+biotech.dropna(inplace=True)
+
+#define the predictors as x_bio
+x_bio = biotech[['years_before_IPO', 'days_listed', 'offer_price2016', 'premoney_2016', 
+                 'private_money_2016', 'median_employees_thousands','median_ebitda_2016','median_revenue_2016',
+                 'median_netincome_2016','median_grossprofit_2016','median_rnd_2016','median_stock_sale_2016', 
+                 'median_stock_bought_2016','num_of_approved', 'GenderRatio', 
+                 'NationalityMix', 'NetworkSize']]
+
+# random forests in sklearn can't deal with categorical data 
+# so we need to use one hot encoding to convert categorical data to numeric data
+dummies = pd.get_dummies(biotech[['Region', 'after_phase3']])
+
+#adj_ipo_window has 5 values, need to convert then to dummy variables
+ipo = pd.get_dummies(biotech['adj_ipo_window'])
+ipo.rename(columns={1:"ipo_window_1",2:"ipo_window_2",3:"ipo_window_3",
+                    4:"ipo_window_4", 5:"ipo_window_5"}, inplace=True)
+
+#concatenate all predictors (dummy variables and quantative variables together)
+x_bio = pd.concat([x_bio,dummies,ipo],axis=1)
+
+#check if the df looks clean and how many data points we have in the final dataset
+x_bio.iloc[1]
+x_bio.tail()
+len(x_bio.axes[0])
+
+#define the response which in this case is 
+#if the company's markert value reached 1 billion dollars at one point
+y_bio = pd.get_dummies(biotech['billion_dollars_status'])
+y_bio = y_bio['Yes']
+y_bio.tail()
+
+
+#logistic regression
+LR = LogisticRegression()
+x_train, x_test, y_train, y_test = train_test_split(x_bio, y_bio, test_size = 0.3)
+LR.fit(x_bio, y_bio)
+LR.coef_
+LR.score(x_test, y_test)
+
+#use statsmodel do LR nodeling
+logistic = sm.Logit(y_bio, x_bio)
+res = logistic.fit(disp=0)
+print(res.summary())
+
+res.pred_table()
+y_bio.value_counts()
+
+#get the predicted result matrix based on threshold
+res.pred_table(threshold=0.5)
+res.pred_table(threshold=0.7)
