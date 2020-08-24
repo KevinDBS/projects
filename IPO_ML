@@ -1,0 +1,94 @@
+#import all packages
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
+from statistics import mean
+import statsmodels.api as sm
+from statsmodels.formula.api import logit
+
+df = pd.read_csv('C:/Users/kzhang/Desktop/IPO_Data.csv')
+biotech = df[df['company_type'] == 'Biotech']
+
+#slice the DataFrame to get the columns we need
+biotech = biotech[['years_before_IPO','days_listed', 'deletion_reason', 'adj_ipo_window', 
+                   'offer_price2016', 'premoney_2016', 'private_money_2016', 'median_employees_thousands',
+                   'median_ebitda_2016','median_revenue_2016','median_netincome_2016',
+                   'median_grossprofit_2016','median_rnd_2016','median_stock_sale_2016', 
+                   'median_stock_bought_2016', 'num_of_approved', 'after_phase3',
+                   'Region','billion_dollars_status','GenderRatio', 'NationalityMix', 'NetworkSize']]
+
+#only get companies that have deletion_reason = 1 and 0
+com_acquisition = biotech.loc[biotech['deletion_reason']==1]
+len(com_acquisition)
+com_acquisition.isnull().sum()
+
+com_active = biotech.loc[biotech['deletion_reason']==0]
+len(com_active)
+
+acquisition = pd.concat([com_acquisition,com_active])
+len(acquisition)
+
+acquisition.isnull().sum()
+acquisition.dropna(inplace = True)
+
+y_acquisition = acquisition['deletion_reason']
+
+len(y_acquisition)
+
+x_acquisiton = acquisition[['years_before_IPO', 'days_listed', 'adj_ipo_window', 'offer_price2016', 
+                            'premoney_2016','private_money_2016', 'median_employees_thousands',
+                            'median_ebitda_2016','median_revenue_2016','median_netincome_2016',
+                            'median_grossprofit_2016','median_rnd_2016','median_stock_sale_2016', 
+                            'median_stock_bought_2016','num_of_approved', 'GenderRatio', 
+                            'NationalityMix', 'NetworkSize']]
+
+#transform all qualitative variables into dummy variables
+acu_dummy = pd.get_dummies(acquisition[['billion_dollars_status','after_phase3','Region']])
+
+acu_dummy = acu_dummy[['billion_dollars_status_Yes','after_phase3_Yes',
+                       'Region_SOUTH','Region_NORTHEAST','Region_WEST','Region_MIDWEST']]
+
+#axis=1 means on the columns level
+x_acquisiton = pd.concat([x_acquisiton,acu_dummy],axis=1)
+
+#define how many folders need to go through the cross validation process
+from sklearn.model_selection import KFold
+kf = KFold(n_splits = 10)
+print(kf)
+
+#define model_score function where it fits model on the test data 
+#and calculate the mean accuracy on the given test data
+def model_score(model, x_train, x_test, y_train, y_test):
+    model.fit(x_train, y_train)
+    return model.score(x_test, y_test)
+
+#model_imp function utlizes the feature_importances_ property to 
+#generate feature importance, the higher the more important the feature
+def model_imp(model,x_train, x_test, y_train, y_test):
+    model.fit(x_train, y_train)
+    return model.feature_importances_
+
+#return a list of the top 3 important feature
+def top3(lis):
+    final_list = []
+    location = []
+    for i in range(3):
+        top = max(lis)
+        final_list.append(top)
+        location.append(lis.index(top)+1)
+        lis[lis.index(top)]=0
+    print(final_list,location)
+
+score_list = []
+
+
+for train_index, test_index in kf.split(x_acquisiton):
+    x_train, x_test = x_acquisiton.iloc[train_index], x_acquisiton.iloc[test_index]
+    y_train, y_test = y_acquisition.iloc[train_index], y_acquisition.iloc[test_index]
+    score = model_score(RandomForestClassifier(), x_train, x_test, y_train, y_test) 
+    score_list.append(score)
+    print('RandomForest score is ', score) 
+    important_feature = model_imp(RandomForestClassifier(), x_train, x_test, y_train, y_test).tolist()
+    top3(important_feature)
