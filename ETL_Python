@@ -1,0 +1,41 @@
+
+import pubmed_parser as pp
+import psycopg2
+
+params = {
+  'dbname': 'kevvytime',
+  'user': 'postgres',
+  'password': '*******',
+  'host': 'localhost',
+  'port': 5432
+}
+
+conn = psycopg2.connect(**params)
+conn.autocommit = True
+cur = conn.cursor()
+
+
+for num in range (1,1184,1):
+    path = "C:/Users/kzhang/Desktop/pubmeddownload/pubmed20n" + str(num).zfill(4) + ".xml.gz"
+
+    dicts_out = pp.parse_medline_xml(path)
+
+    for i in range(len(dicts_out)):
+
+
+        x = dicts_out[i]
+
+        if (x['delete'] == True):
+
+           continue
+
+        elif (x['pmid_version'] == "1"):
+
+           postgres_insert_query = "INSERT INTO pubmed.citation (pmid, abstract, article_title, date_created, date_revised, date_completed, mesh_descriptors, mesh_qualifiers, keywords, chem_names, best_year) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (pmid) DO NOTHING"
+           insert_citation = (x['pmid'], x['abstract'], x['title'], x['date_created'], x['date_revised'], x['date_completed'], x['mesh_terms'], x['mesh_qualifiers'], x['keywords'], x['chemical_list'], x['best_year'])
+           cur.execute(postgres_insert_query, insert_citation)
+
+        else:
+           continue
+
+    print("file " + str(num).zfill(4) + " processed")
