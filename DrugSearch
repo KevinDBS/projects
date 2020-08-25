@@ -1,0 +1,81 @@
+#For this project, we want to find if certian drugs are in a dataset.
+#The drugs we are searching for are in the master356.csv file. For each of these 356 drugs,
+#we have its tradename and its active ingredient. The dataset we are searching in is DPW_expired_active.csv
+#For the searching process, I use a nested loop, it will compare the tradename first and only if 
+#the tradenames match, will the loop to check if the active ingredients match
+
+
+import pandas as pd
+
+master356 = pd.read_csv('C:/Users/kzhang/Desktop/master356.csv')
+DPW = pd.read_csv('C:/Users/kzhang/Desktop/DPW_expired_active.csv')
+
+
+#explore the drugs whose tradenames only have 3 letters (3-letter is the shortest name)
+tradename = DPW['tradename']
+
+length = [len(x) for x in tradename]           
+
+#this returns a boolean list indicating the location of those drugs             
+def check(ourlist, val):
+    result_list = []
+    for x in ourlist:
+        if x == 3:
+            result_list.append(True)
+        else:
+            result_list.append(False)
+    return result_list
+
+result = check(length,3)
+
+#check how many of the drugs have 3-letter tradename                
+only3 = tradename[result]                             
+only3.nunique()                           
+only3.value_counts()     
+
+#use the location to track down the active ingredient information of those drugs
+ingredient = DPW['ingredient']         
+only3ing = ingredient[result]               
+len(only3ing)
+only3ing.value_counts()
+
+### matching between DPW and master table (our 356 drug list)##################
+### in the nested for loop, it matches the brand_name = tradename ###
+### then it matches ingredient####
+master_brand = master356['brand_name']
+master_brand = [x.upper() for x in master_brand]
+
+master_ing = master356['active_ingredients']
+master_ing = [x.upper() for x in master_ing]
+
+
+DPW_trade = DPW['tradename'].tolist()
+DPW_trade = [x.upper() for x in DPW_trade]
+
+DPW_ing = DPW['ingredient'].tolist()
+DPW_ing = [x.upper() for x in DPW_ing]
+
+
+df_master = pd.DataFrame()
+df_DPW = pd.DataFrame()
+
+for i in range(len(master_brand)):
+    for j in range(len(DPW_trade)):
+        if (master_brand[i][0:4] == DPW_trade[j][0:4]):
+            if (master_ing[i][0:5] == DPW_ing[j][0:5]):
+             
+                df_master = df_master.append(master356.iloc[i])
+                df_DPW = df_DPW.append(DPW.iloc[j])
+            else:
+                continue
+        else:
+            continue
+
+#df_ourdrug is the list of our durgs (among the 356 drugs) that match 
+#df_orange is the list of orangebookproducts that match our drug list (356 drug)
+df_master.iloc[0]
+len(df_master['brand_name'])
+df_master.to_csv('C:/Users/kzhang/Desktop/df_master.csv')
+df_DPW.to_csv('C:/Users/kzhang/Desktop/df_DPW.csv')
+df_master['brand_name'].nunique()
+df_DPW['tradename'].nunique()
