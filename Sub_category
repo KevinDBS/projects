@@ -1,0 +1,70 @@
+import pandas as pd
+import numpy as np
+
+pharm = pd.read_csv('C:/Users/kzhang/Desktop/pharm_project.csv', low_memory = False)
+
+def check_USA(drug_country):
+    drug_country = str(drug_country)
+    return 'USA' in drug_country           
+
+def check_Launch(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Launched' in drug_country
+
+def check_PhaseI(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Phase I Clinical Trial' in drug_country
+
+def check_PhaseII(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Phase II Clinical Trial' in drug_country
+
+def check_Pre(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Preclinical' in drug_country
+
+def check_PhaseIII(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Phase III Clinical Trial' in drug_country
+
+def check_Withdrawn(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Withdrawn' in drug_country
+
+def check_Reg(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Registered' in drug_country
+
+def check_Prereg(drug_country):
+    drug_country = str(drug_country)
+    return 'USA; status:Pre-registration' in drug_country
+    
+is_PhaseI = pharm.apply(lambda df: check_PhaseI(df['drugCountries']), axis = 1)
+pharm_PhaseI = pharm.loc[is_PhaseI]
+len(pharm_PhaseI)
+pharm_PhaseI.to_csv('C:/Users/kzhang/Desktop/pharm_PhaseI.csv')
+
+is_PhaseII = pharm.apply(lambda df: check_PhaseII(df['drugCountries']), axis = 1)
+pharm_PhaseII = pharm.loc[is_PhaseII]
+len(pharm_PhaseII)
+pharm_PhaseII.to_csv('C:/Users/kzhang/Desktop/pharm_PhaseII.csv')
+
+is_Pre = pharm.apply(lambda df: check_Pre(df['drugCountries']), axis = 1)
+pharm_Pre = pharm.loc[is_Pre]
+len(pharm_Pre)
+pharm_Pre.to_csv('C:/Users/kzhang/Desktop/pharm_Pre.csv')
+
+is_PhaseIII = pharm.apply(lambda df: check_PhaseIII(df['drugCountries']), axis = 1)
+pharm_PhaseIII = pharm.loc[is_PhaseIII]
+len(pharm_PhaseIII)
+pharm_PhaseIII.to_csv('C:/Users/kzhang/Desktop/pharm_PhaseIII.csv')
+
+is_Withdrawn = pharm.apply(lambda df: check_Withdrawn(df['drugCountries']), axis = 1)
+pharm_Withdrawn = pharm.loc[is_Withdrawn]
+len(pharm_Withdrawn)
+pharm_Withdrawn.to_csv('C:/Users/kzhang/Desktop/pharm_Withdrawn.csv')
+
+is_Registered = pharm.apply(lambda df: check_Reg(df['drugCountries']), axis = 1)
+pharm_Registered = pharm.loc[is_Registered]
+len(pharm_Registered)
+pharm_Registered.to_csv('C:/Users/kzhang/Desktop/pharm_Registered.csv')
